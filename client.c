@@ -3,99 +3,54 @@
 #include <winsock2.h>
 #include <string.h>
 #include <unistd.h>
-
-// CLIENT
-
 #define PORT 5001
 
+// CLIENT
 // using -lws2_32 on linker
-// https://docs.microsoft.com/en-us/windows/win32/winsock/windows-sockets-error-codes-2
 
-int main(int argc, char *argv[]) {
+int main(void) {
+
+    // initializing windows socket
+    WSADATA WsaData;
+    int result = WSAStartup(MAKEWORD(2,2), &WsaData);
+    if (result < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
 
     int sockfd;
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
 
-    char buffer[256] = "ciao!";
+    sockfd = socket(PF_INET, SOCK_STREAM, 0);
+    if (sockfd < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
+
     char buf[256];
 
-    WSADATA wsaData;
-    int res = WSAStartup(MAKEWORD(2,2), &wsaData);
-
-    if (res < 0) {
-        printf("Error startup: %d", WSAGetLastError());
-        exit(1);
-    }
-
-    // Create a socket point
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    printf("sockfd %d\n", sockfd);
-
-    if (sockfd < 0) {
-        printf("Error opening socket: %d", WSAGetLastError());
-        exit(2);
-    }
-
-    res = gethostname(buf, 256);
-
-    if (res < 0) {
-        printf("Error hostname: %d", WSAGetLastError());
-        exit(3);
-    }
+    result = gethostname(buf, sizeof(buf));
+    if (result < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
 
     printf("found: %s\n", buf);
-    server = gethostbyname(buf);
 
-    if (server == NULL) {
-        printf("Error host: %d", WSAGetLastError());
-        exit(4);
-    }
+    struct hostent *host;
+    host = gethostbyname(buf);
+    if (host == NULL) { printf("Errid: %d", WSAGetLastError()); exit(1); }
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr = *(struct in_addr *)*server -> h_addr_list;
-    serv_addr.sin_port = htons(PORT);
+    struct sockaddr_in server;
 
-    // Now connect to the server
-    res = connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    server.sin_family = AF_INET;
+    server.sin_addr = *(struct in_addr*)*host->h_addr_list;
+    server.sin_port = htons(PORT);
 
-    printf("serv_addr %d\n", (int)sizeof(serv_addr));
+    result = connect(sockfd, (struct sockaddr*)&server, sizeof(server));
+    if (result < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
 
-    if (res < 0) {
-       printf("Error connect socket: %d", WSAGetLastError());
-        exit(5);
-    }
+    printf("Connection established: %s\n", inet_ntoa(server.sin_addr));
 
-    // Now ask for a message from the user, this message
-    // will be read by server
+    char text[256] = "hello everyone!";
 
-    printf("Please enter the message: ciao!\n");
-    //memset(buffer, 0x00, 256);
-    //fgets(buffer, 255, stdin);
+    result = send(sockfd, text, strlen(text), 0);
+    if (result < 0) { perror("Errno: "); exit(1); }
 
-    // Send message to the server
-    res = mempcpy(&sockfd, buffer, sizeof(sockfd));
+    printf("msg sent: %s\n", text);
 
-    if (res < 0) {
-       printf("Error writing socket: %d", WSAGetLastError());
-        exit(6);
-    }
-
-    printf("\nMessage sent\n");
-
-    // Now read server response
-    //memset(buffer, 0x00, 256);
-    //res = mempcpy(buffer, (void*)&sockfd, sizeof(sockfd));
-    //res = mempcpy(buffer, sockfd, sizeof(sockfd));
-
-    res = read(sockfd, buffer, sizeof(buffer));
-
-    if (res < 0) {
-        printf("Error reading socket: %d", WSAGetLastError());
-        exit(7);
-    }
-
-    printf("Message received: %s\n", buffer);
+    close(sockfd);
+    WSACleanup();
     return 0;
+
 }
