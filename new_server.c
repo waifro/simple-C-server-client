@@ -17,17 +17,16 @@ int main(void) {
 
     int sockfd;
 
-    struct sockaddr_in serv_addr;
-    struct sockaddr_in  cli_addr;
+    struct sockaddr_in server;
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(PORT);
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(PORT);
 
-    result = bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
+    result = bind(sockfd, (struct sockaddr*)&server, sizeof(server));
     if (result < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
 
     result = listen(sockfd, 5);
@@ -41,8 +40,17 @@ int main(void) {
     newsockfd = accept(sockfd, NULL, NULL);
     if (newsockfd < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
 
-    printf("Connection estabilished: %d\n", newsockfd);
+    printf("Connection from socket id: %d\n", newsockfd);
 
+    char buf[256];
+
+    result = recv(newsockfd, buf, sizeof(buf), 0);
+    if (result < 0) { perror("Errno: "); exit(1); }
+
+    printf("msg received: %s\n", buf);
+
+    close(newsockfd);
+    close(sockfd);
     WSACleanup();
     return 0;
 
