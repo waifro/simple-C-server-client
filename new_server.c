@@ -25,7 +25,7 @@ int main(void) {
 
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htonl(PORT);
+    serv_addr.sin_port = htons(PORT);
 
     result = bind(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
     if (result < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
@@ -41,7 +41,7 @@ int main(void) {
     newsockfd = accept(sockfd, NULL, NULL);
     if (newsockfd < 0) { printf("Errid: %d", WSAGetLastError()); exit(1); }
 
-    printf("Connection estabilished...\n");
+    printf("Connection estabilished: %d\n", newsockfd);
 
     WSACleanup();
     return 0;
