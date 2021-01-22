@@ -13,9 +13,6 @@
 	#include <netdb.h>
 #endif
 
-
-#include <switch.h>
-
 #define PORT 5001
 
 // CLIENT
