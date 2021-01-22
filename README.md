@@ -1,4 +1,4 @@
-# minimal (simple) PoC server-client socket for Windows
+# minimal (simple) PoC server-client socket for Windows & Linux
 
 
 in case you encounter on some error code, use this:
